@@ -25,7 +25,7 @@ builder.Services.AddOpenIddict().AddCore(options =>
 {
     options.UseLocalServer();
     options.UseAspNetCore();
-}); ;
+});
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
