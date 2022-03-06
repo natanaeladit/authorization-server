@@ -47,7 +47,7 @@ if (args.Length > 0 && args[0] == "-update")
     var serviceProvider = builder.Services.BuildServiceProvider();
     await using var scope = serviceProvider.CreateAsyncScope();
     var context = scope.ServiceProvider.GetRequiredService<AuthorizationDbContext>();
-    await context.Database.EnsureCreatedAsync();
+    await context.Database.MigrateAsync();
     var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
     if (await manager.FindByClientIdAsync("console") == null)
     {
