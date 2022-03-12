@@ -7,6 +7,8 @@ using System.Collections.Immutable;
 using System.Security.Claims;
 using server.Extensions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
 
 namespace server.Controllers
 {
@@ -56,6 +58,18 @@ namespace server.Controllers
             }
 
             throw new NotImplementedException("The specified grant type is not implemented.");
+        }
+
+        [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
+        [HttpGet("~/connect/userinfo")]
+        public async Task<IActionResult> Userinfo()
+        {
+            var claimsPrincipal = (await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)).Principal;
+
+            return Ok(new
+            {
+                Name = claimsPrincipal.GetClaim(Claims.Name),
+            });
         }
 
         private IEnumerable<string> GetDestinations(Claim claim)
