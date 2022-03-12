@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using server.Models;
@@ -10,21 +11,56 @@ builder.Services.AddDbContext<AuthorizationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.UseOpenIddict();
 });
-builder.Services.AddOpenIddict().AddCore(options =>
+
+builder.Services.AddOpenIddict()
+    .AddCore(options =>
+    {
+        options.UseEntityFrameworkCore()
+               .UseDbContext<AuthorizationDbContext>();
+    })
+    .AddServer(options =>
+    {
+        options.SetTokenEndpointUris("/connect/token")
+               .SetAuthorizationEndpointUris("/connect/authorize")
+               .SetLogoutEndpointUris("/connect/logout")
+               .SetUserinfoEndpointUris("/connect/userinfo");
+
+        options.AllowClientCredentialsFlow()
+               .AllowPasswordFlow();
+
+        options.AddDevelopmentEncryptionCertificate()
+               .AddDevelopmentSigningCertificate();
+
+        options.UseAspNetCore()
+               .EnableTokenEndpointPassthrough()
+               .EnableAuthorizationEndpointPassthrough()
+               .EnableLogoutEndpointPassthrough()
+               .EnableUserinfoEndpointPassthrough()
+               .EnableStatusCodePagesIntegration();
+    })
+    .AddValidation(options =>
+    {
+        options.UseLocalServer();
+        options.UseAspNetCore();
+    });
+
+builder.Services.AddAuthentication(options =>
 {
-    options.UseEntityFrameworkCore().UseDbContext<AuthorizationDbContext>();
-}).AddServer(options =>
+    options.DefaultScheme = OpenIddictConstants.Schemes.Bearer;
+    options.DefaultChallengeScheme = OpenIddictConstants.Schemes.Bearer;
+});
+
+builder.Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<AuthorizationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.SetTokenEndpointUris("/connect/token");
-    options.AllowClientCredentialsFlow();
-    options.AddDevelopmentEncryptionCertificate()
-           .AddDevelopmentSigningCertificate();
-    options.UseAspNetCore()
-           .EnableTokenEndpointPassthrough();
-}).AddValidation(options =>
-{
-    options.UseLocalServer();
-    options.UseAspNetCore();
+    options.ClaimsIdentity.UserNameClaimType = Claims.Name;
+    options.ClaimsIdentity.UserIdClaimType = Claims.Subject;
+    options.ClaimsIdentity.RoleClaimType = Claims.Role;
+    options.ClaimsIdentity.EmailClaimType = Claims.Email;
+    options.SignIn.RequireConfirmedAccount = false;
 });
 
 var app = builder.Build();
