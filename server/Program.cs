@@ -22,11 +22,19 @@ builder.Services.AddOpenIddict()
     {
         options.SetTokenEndpointUris("/connect/token")
                .SetAuthorizationEndpointUris("/connect/authorize")
-               .SetLogoutEndpointUris("/connect/logout")
+               //.SetLogoutEndpointUris("/connect/logout")
                .SetUserinfoEndpointUris("/connect/userinfo");
 
         options.AllowClientCredentialsFlow()
-               .AllowPasswordFlow();
+               .AllowPasswordFlow()
+               .AllowRefreshTokenFlow();
+
+        options.RegisterScopes(
+                OpenIddictConstants.Scopes.OpenId,
+                OpenIddictConstants.Scopes.Profile,
+                OpenIddictConstants.Scopes.Email,
+                OpenIddictConstants.Scopes.Roles
+                );
 
         options.AddDevelopmentEncryptionCertificate()
                .AddDevelopmentSigningCertificate();
@@ -34,7 +42,7 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore()
                .EnableTokenEndpointPassthrough()
                .EnableAuthorizationEndpointPassthrough()
-               .EnableLogoutEndpointPassthrough()
+               //.EnableLogoutEndpointPassthrough()
                .EnableUserinfoEndpointPassthrough()
                .EnableStatusCodePagesIntegration();
     })
@@ -56,10 +64,10 @@ builder.Services.AddIdentity<User, IdentityRole>()
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.ClaimsIdentity.UserNameClaimType = Claims.Name;
-    options.ClaimsIdentity.UserIdClaimType = Claims.Subject;
-    options.ClaimsIdentity.RoleClaimType = Claims.Role;
-    options.ClaimsIdentity.EmailClaimType = Claims.Email;
+    options.ClaimsIdentity.UserNameClaimType = OpenIddictConstants.Claims.Name;
+    options.ClaimsIdentity.UserIdClaimType = OpenIddictConstants.Claims.Subject;
+    options.ClaimsIdentity.RoleClaimType = OpenIddictConstants.Claims.Role;
+    options.ClaimsIdentity.EmailClaimType = OpenIddictConstants.Claims.Email;
     options.SignIn.RequireConfirmedAccount = false;
 });
 
@@ -96,7 +104,22 @@ if (args.Length > 0 && args[0] == "-update")
             Permissions =
             {
                 Permissions.Endpoints.Token,
-                Permissions.GrantTypes.ClientCredentials
+                Permissions.GrantTypes.ClientCredentials,
+            }
+        });
+    }
+    if (await manager.FindByClientIdAsync("web") == null)
+    {
+        Console.WriteLine("adding web client ...");
+        await manager.CreateAsync(new OpenIddictApplicationDescriptor
+        {
+            ClientId = "web",
+            ClientSecret = "BEB06826-0308-4DFD-AEDD-3D04F6808901",
+            DisplayName = "My web application",
+            Permissions =
+            {
+                Permissions.Endpoints.Token,
+                Permissions.GrantTypes.Password,
             }
         });
     }
