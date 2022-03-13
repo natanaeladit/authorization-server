@@ -85,7 +85,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllers();
     endpoints.MapDefaultControllerRoute();
 });
-if (args.Length > 0 && args[0] == "-update")
+if (args.Length > 0 && args[0] == "-u")
 {
     Console.WriteLine("updating database ...");
     var serviceProvider = builder.Services.BuildServiceProvider();
