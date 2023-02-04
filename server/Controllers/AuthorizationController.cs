@@ -52,11 +52,11 @@ namespace server.Controllers
                     TokenValidationParameters.DefaultAuthenticationType,
                     Claims.Name, Claims.Role);
 
-                identity.AddClaim(Claims.Subject, await _applicationManager.GetClientIdAsync(application),
-                    Destinations.AccessToken, Destinations.IdentityToken);
+                identity.AddClaim(new Claim(Claims.Subject, await _applicationManager.GetClientIdAsync(application),
+                    Destinations.AccessToken, Destinations.IdentityToken));
 
-                identity.AddClaim(Claims.Name, await _applicationManager.GetDisplayNameAsync(application),
-                    Destinations.AccessToken, Destinations.IdentityToken);
+                identity.AddClaim(new Claim(Claims.Name, await _applicationManager.GetDisplayNameAsync(application),
+                    Destinations.AccessToken, Destinations.IdentityToken));
 
                 var principal = new ClaimsPrincipal(identity);
                 principal.SetScopes(request.GetScopes());

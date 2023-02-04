@@ -3,8 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using server.Models;
 using static OpenIddict.Abstractions.OpenIddictConstants;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog((ctx, lc) => lc
+       .WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AuthorizationDbContext>(options =>
 {
@@ -23,11 +26,13 @@ builder.Services.AddOpenIddict()
         options.SetTokenEndpointUris("/connect/token")
                .SetAuthorizationEndpointUris("/connect/authorize")
                //.SetLogoutEndpointUris("/connect/logout")
-               .SetUserinfoEndpointUris("/connect/userinfo");
+               .SetUserinfoEndpointUris("/connect/userinfo")
+               .SetIntrospectionEndpointUris("/connect/introspect");
 
         options.AllowClientCredentialsFlow()
                .AllowPasswordFlow()
-               .AllowRefreshTokenFlow();
+               .AllowRefreshTokenFlow()
+               .AllowAuthorizationCodeFlow();
 
         options.RegisterScopes(
                 OpenIddictConstants.Scopes.OpenId,
@@ -120,6 +125,7 @@ if (args.Length > 0 && args[0] == "-u")
             {
                 Permissions.Endpoints.Token,
                 Permissions.GrantTypes.Password,
+                Permissions.Endpoints.Introspection,
             }
         });
     }
